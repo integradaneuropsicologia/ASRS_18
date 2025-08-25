@@ -74,13 +74,10 @@
     <h1>ASRS-18 — Escala de Autorreporte</h1>
     <p class="muted">
       Marque como você se comportou nos <b>últimos 6 meses</b>. Opções: 
-      <b>0</b>=Nunca, <b>1</b>=Raramente, <b>2</b>=Algumas vezes, <b>3</b>=Frequentemente, <b>4</b>=Muito frequentemente.
+      <b></b>Nunca, <b></b>Raramente, <b></b>Algumas vezes, <b></b>Frequentemente, <b></b>Muito frequentemente.
     </p>
 
-    <div class="legend">
-      <span class="pill">Parte A: Itens 1–9</span>
-      <span class="pill">Parte B: Itens 10–18</span>
-    </div>
+ 
 
     <div id="pacInfo" class="grid-info" style="display:none;"></div>
 
@@ -196,7 +193,7 @@ function renderQuestions(){
     CHOICES.forEach(c=>{
       const lab = document.createElement('label'); lab.className = 'opt'; lab.setAttribute('title', `${c.l} (${c.v})`);
       const id = `q${qn}_${c.v}`;
-      lab.innerHTML = `<input type="radio" name="q${qn}" id="${id}" value="${c.v}" required aria-labelledby="s${qn}"><span>${c.l}</span><small>(${c.v})</small>`;
+      lab.innerHTML = `<input type="radio" name="q${qn}" id="${id}" value="${c.v}" required aria-labelledby="s${qn}"><span>${c.l}</span>`;
       scale.appendChild(lab);
     });
 
@@ -371,4 +368,3 @@ $("#form").addEventListener("submit", async (e)=>{
 </script>
 </body>
 </html>
-
