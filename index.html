@@ -70,7 +70,6 @@
     .scale{grid-template-columns:1fr}
   }
 
-  /* Botões de escolha (0..4) */
   .opt{
     display:flex;
     align-items:center;
@@ -118,7 +117,6 @@
     font-size:.86rem
   }
 
-  /* Ações */
   .btn{
     display:inline-flex;
     align-items:center;
@@ -142,7 +140,6 @@
     cursor:not-allowed
   }
 
-  /* Mensagens */
   .msg{
     margin:12px 0;
     padding:12px;
@@ -164,7 +161,6 @@
     color:#ffe6b0
   }
 
-  /* Progresso */
   .progress{
     height:10px;
     background:rgba(255,255,255,.05);
@@ -219,11 +215,11 @@ const SHEETDB_BASE = "https://sheetdb.io/api/v1/8pmdh33s9fvy8";
 const SHEETS = {
   PATIENTS:"Patients",
   TOKENS:"LinkTokens",
-  SCORES:"Scores_ASRS_18" // conferir aba na planilha
+  SCORES:"Scores_ASRS_18"
 };
 const CODE = "ASRS18";
 const PORTAL_URL = "https://integradaneuropsicologia.github.io/formularios/";
-const RELEASE_KEYS = ["ASRS_18"]; // coluna(s) do Patients com "sim" pra liberar
+const RELEASE_KEYS = ["ASRS_18"];
 
 /* ===== HELPERS ===== */
 const $ = s => document.querySelector(s);
@@ -298,8 +294,7 @@ function goPortalWithToken(){
   }
 }
 
-/* ===== ESCALA E ITENS (18) ===== */
-/* Cada resposta vale 0..4 */
+/* ===== ESCALA / ITENS ===== */
 const CHOICES = [
   {v:0, l:'Nunca'},
   {v:1, l:'Raramente'},
@@ -308,8 +303,6 @@ const CHOICES = [
   {v:4, l:'Muito frequentemente'}
 ];
 
-/* Itens 1–9 = Desatenção / Atenção sustentada
-   Itens 10–18 = Hiperatividade / Impulsividade  */
 const ITEMS = [
   // Parte A — Desatenção
   {part:'A', text:'1. Com que frequência você comete erros por falta de atenção quando tem de trabalhar num projeto chato ou difícil?'},
@@ -338,7 +331,6 @@ const ITEMS = [
 function renderQuestions(){
   const host = $("#qs"); host.innerHTML = "";
 
-  // títulos das partes
   function sectionEl(label){
     const d=document.createElement('div');
     d.className='section';
@@ -348,7 +340,7 @@ function renderQuestions(){
   host.appendChild(sectionEl('Parte A — Atenção / Desatenção (itens 1 a 9)'));
 
   ITEMS.forEach((it, idx)=>{
-    if(idx===9){ // antes do item 10
+    if(idx===9){
       host.appendChild(sectionEl('Parte B — Hiperatividade / Impulsividade (itens 10 a 18)'));
     }
 
@@ -383,7 +375,7 @@ function renderQuestions(){
   });
 }
 
-/* ===== ESTADO (runtime) ===== */
+/* ===== ESTADO ===== */
 let patient=null, tokenRow=null, CPF="";
 const STORAGE_KEY = `ASRS18_${TOKEN||'anon'}`;
 let startAt = Date.now();
@@ -396,7 +388,6 @@ let startAt = Date.now();
       return;
     }
 
-    // token válido?
     const trows = await sheetSearch(SHEETS.TOKENS, { token: TOKEN });
     if(!trows || !trows.length) throw new Error("Token inválido ou expirado.");
     tokenRow = trows[0];
@@ -410,12 +401,10 @@ let startAt = Date.now();
     CPF = onlyDigits(tokenRow.cpf||"");
     if(!CPF) throw new Error("Token sem CPF vinculado.");
 
-    // paciente
     const prows = await sheetSearch(SHEETS.PATIENTS, { cpf: CPF });
     if(!prows || !prows.length) throw new Error("Paciente não encontrado.");
     patient = prows[0];
 
-    // liberado?
     const isAllowed = RELEASE_KEYS.some(k =>
       String(patient[k]||"").trim().toLowerCase()==="sim"
     );
@@ -424,7 +413,6 @@ let startAt = Date.now();
       return;
     }
 
-    // já respondeu?
     const doneKeys = RELEASE_KEYS.map(k => `${k}_FEITO`);
     const anyDoneFlag = doneKeys.some(k =>
       String(patient[k]||"").trim().toLowerCase()==="sim"
@@ -436,7 +424,6 @@ let startAt = Date.now();
       return;
     }
 
-    // render UI
     renderPatientInfo();
     renderQuestions();
     restoreDraft();
@@ -447,7 +434,6 @@ let startAt = Date.now();
     $("#progressWrap").style.display = "block";
     hideBox("#alert");
 
-    // marca início (pra métrica de duração)
     startAt = Date.now();
 
     devChecks();
@@ -458,13 +444,12 @@ let startAt = Date.now();
   }
 })();
 
-/* ===== INFO DO PACIENTE NO TOPO ===== */
+/* ===== INFO PACIENTE ===== */
 function renderPatientInfo(){
   const g = $("#pacInfo"); g.innerHTML="";
   const info = [
     ["Nome", patient.nome || "-"],
-    ["CPF", maskCPF(patient.cpf)],
-    
+    ["CPF", maskCPF(patient.cpf)]
   ];
   for(const [k,v] of info){
     const div = document.createElement("div");
@@ -474,7 +459,7 @@ function renderPatientInfo(){
   }
 }
 
-/* ===== RASCUNHO LOCAL (localStorage) ===== */
+/* ===== RASCUNHO ===== */
 function saveDraft(){
   const data = {};
   for(let i=1;i<=ITEMS.length;i++){
@@ -497,9 +482,7 @@ function restoreDraft(){
       const el = document.querySelector(`input[name="${k}"][value="${v}"]`);
       if(el){ el.checked = true; }
     }
-  }catch(e){
-    /* ignore */
-  }
+  }catch(e){}
 }
 function clearDraft(){
   try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
@@ -521,7 +504,7 @@ function updateProgress(){
   $("#bar").style.width = `${(answered/total)*100}%`;
 }
 
-/* ===== EVENTOS DE UI ===== */
+/* ===== EVENTOS UI ===== */
 addEventListener('change', (e)=>{
   if(e.target && e.target.matches('input[type="radio"][name^="q"]')){
     saveDraft();
@@ -537,7 +520,7 @@ $("#clearDraft").addEventListener('click', ()=>{
   setBox('#msg','Rascunho apagado.','warn');
 });
 
-/* ===== AUX: SOMAS / RESPOSTAS ===== */
+/* ===== SOMAS / RESPOSTAS ===== */
 function sumRange(from, to){
   let s = 0;
   for(let i=from;i<=to;i++){
@@ -548,23 +531,17 @@ function sumRange(from, to){
   return s;
 }
 
-// mapa bruto { q01:2, q02:4, ... }
 function collectAnswersMap(){
   const ans = {};
   for(let i=1;i<=ITEMS.length;i++){
     const qn = String(i).padStart(2,"0");
     const sel = document.querySelector(`input[name="q${qn}"]:checked`);
-    if(sel){
-      ans[qn] = Number(sel.value);
-    }else{
-      ans[qn] = null;
-    }
+    ans[qn] = sel ? Number(sel.value) : null;
   }
   return ans;
 }
 
-// versão legível p/ laudo/PDF
-// { q01:{stem:"...?", value:2, label:"Algumas vezes"}, ... }
+// formato legível p/ laudo/PDF
 function collectQuestionsReadable(){
   const obj = {};
   for(let i=1;i<=ITEMS.length;i++){
@@ -598,7 +575,6 @@ $("#form").addEventListener("submit", async (e)=>{
   try{
     if(!patient) throw new Error("Sessão inválida. Recarregue o link.");
 
-    // Validação: todas marcadas
     for(let i=1;i<=ITEMS.length;i++){
       const qn = String(i).padStart(2,'0');
       const sel = document.querySelector(`input[name="q${qn}"]:checked`);
@@ -609,30 +585,24 @@ $("#form").addEventListener("submit", async (e)=>{
       }
     }
 
-    // Subtotais
-    const scoreInat = sumRange(1,9);      // desatenção
-    const scoreHiperImp = sumRange(10,18); // hiperatividade / impulsividade
+    const scoreInat = sumRange(1,9);
+    const scoreHiperImp = sumRange(10,18);
     const total = scoreInat + scoreHiperImp;
 
-    // limites teóricos (cada item 0..4)
-    const maxInat = 9 * 4;        // 36
-    const maxHiperImp = 9 * 4;    // 36
-    const maxTotal = 18 * 4;      // 72
+    const maxInat = 9 * 4;
+    const maxHiperImp = 9 * 4;
+    const maxTotal = 18 * 4;
 
-    // coleta respostas e texto pra anexar nas métricas
     const answersMap = collectAnswersMap();
     const questionsReadable = collectQuestionsReadable();
 
-    // duração
     const durationSec = Math.round((Date.now() - startAt)/1000);
 
-    // texto que vai na coluna 'categoria' (usamos chave=valor separado por vírgula
     const categoria_csv = [
-      `inatencao=${scoreInat}`,
-      `hiperimpulsividade=${scoreHiperImp}`
+      `ParteA=${scoreInat}`,
+      `ParteB=${scoreHiperImp}`
     ].join(',');
 
-    // bloco grande de analytics pra salvar como JSON (metrics)
     const metricsObj = {
       sums: {
         inatencao: scoreInat,
@@ -654,7 +624,6 @@ $("#form").addEventListener("submit", async (e)=>{
       answers_readable: questionsReadable
     };
 
-    // segurança extra antes de mandar (rápida checagem duplicada)
     const again = await sheetSearch(SHEETS.SCORES,{cpf:CPF,code:CODE});
     if(again && again.length){
       setBox("#msg","Este formulário já foi enviado anteriormente. Voltando ao portal…","ok");
@@ -662,7 +631,6 @@ $("#form").addEventListener("submit", async (e)=>{
       return;
     }
 
-    // cria linha de resultado
     await sheetCreate(SHEETS.SCORES, {
       result_id: `${patient.cpf}_${CODE}_${Date.now()}`,
       token: TOKEN,
@@ -670,14 +638,12 @@ $("#form").addEventListener("submit", async (e)=>{
       code: CODE,
       source: "paciente",
       submitted_at: new Date().toISOString(),
-      total: total,                 
-      categoria: categoria_csv,  
-      metrics: "",  
-      questions: JSON.stringify(questionsReadable), 
-      
+      total: total,                      // igual BAI: total bruto
+      categoria: categoria_csv,          // Parte A / Parte B
+      metrics: "",
+      questions: JSON.stringify(questionsReadable)
     });
 
-    // marca como feito no Patients
     const doneUpdates = {};
     RELEASE_KEYS.map(k=>`${k}_FEITO`).forEach(k=>{
       if(k in patient) doneUpdates[k] = "sim";
@@ -706,7 +672,6 @@ function devChecks(){
   if(ITEMS.length !== 18){
     console.warn(`ITEMS possui ${ITEMS.length} itens, esperado 18.`);
   }
-  // sanity: nomes dos campos q01..q18
   for(let i=1;i<=ITEMS.length;i++){
     const qn = String(i).padStart(2,"0");
     if(!document.querySelector(`input[name="q${qn}"]`)){
